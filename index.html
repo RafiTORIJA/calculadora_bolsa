@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
-<title>Calculadora bolsa</title>
+<title>Stock Calculator</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
     --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#f1f5f9; --mut:#94a3b8;
-    --acc:#38bdf8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --acc:#38bdf8; --warn:#f59e0b; --bad:#ef4444;
   }
   *{box-sizing:border-box}
   [hidden]{display:none!important}
@@ -22,31 +22,27 @@
   h1{font-size:20px;margin:4px 0 14px;font-weight:650}
   h1 small{display:block;color:var(--mut);font-size:13px;font-weight:400;margin-top:2px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-  .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-  .lbl{font-size:15px;font-weight:600}
-  .seg{display:flex;background:var(--bg);border-radius:9px;padding:3px}
-  .seg button{border:0;background:transparent;color:var(--mut);font-size:13px;padding:6px 10px;border-radius:7px}
-  .seg button.on{background:var(--acc);color:#0f172a;font-weight:650}
-  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .fields.one{grid-template-columns:1fr}
-  label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+  .f{margin-bottom:10px} .f:last-child{margin-bottom:0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+  label{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--mut);margin-bottom:4px}
   .in{position:relative}
   input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);
     font-size:20px;padding:11px 34px 11px 12px;border-radius:10px;outline:none}
   input:focus{border-color:var(--acc)}
+  input.manual{border-color:var(--warn)}
   .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:15px;pointer-events:none}
-  .calc{margin-top:8px;font-size:13px;color:var(--mut)}
-  .calc b{color:var(--txt)}
+  .tag{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--bg);color:var(--mut)}
+  .tag.manual{background:#f59e0b22;color:#fcd34d}
+  .reset{border:1px solid var(--line);background:transparent;color:var(--acc);font-size:12px;padding:4px 9px;border-radius:7px}
+  .hint{margin-top:6px;font-size:13px;color:var(--mut)} .hint b{color:var(--txt)}
   .res{display:grid;gap:8px}
   .r{display:flex;justify-content:space-between;align-items:baseline;background:var(--bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--acc)}
   .r .k{font-size:15px;color:var(--mut)}
-  .r .k b{color:var(--txt);font-size:18px;margin-right:6px}
-  .r .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
-  .r .sub{display:block;text-align:right;font-size:12px;color:var(--mut);font-weight:400}
-  .r.warn{border-left-color:var(--warn)} .r.bad{border-left-color:var(--bad);opacity:.85}
+  .r .v{font-size:25px;font-weight:700;font-variant-numeric:tabular-nums}
+  .r.small .v{font-size:19px} .r.small{border-left-color:var(--line)}
+  .r.warn{border-left-color:var(--warn)} .r.bad{border-left-color:var(--bad)}
   .r.bad .v{color:var(--bad);font-size:18px}
-  .alert{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.4;display:none}
-  .alert.show{display:block}
+  .alert{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.4}
   .alert.warn{background:#f59e0b22;border:1px solid var(--warn);color:#fcd34d}
   .alert.bad{background:#ef444422;border:1px solid var(--bad);color:#fca5a5}
   .foot{font-size:12px;color:var(--mut);line-height:1.5}
@@ -55,145 +51,129 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Calculadora bolsa<small>I = P ÷ SL · inversión con x1, x2 y x4</small></h1>
+  <h1>Stock Calculator<small>Investment = Max Loss ÷ Stop Loss · x1, x2, x4</small></h1>
 
-  <!-- P -->
   <div class="card">
-    <div class="row"><span class="lbl">P · pérdida máxima</span></div>
-    <div class="fields one">
-      <div><label for="p">Pérdida aceptada en la operación</label>
-        <div class="in"><input id="p" inputmode="decimal" autocomplete="off" value="100"><span class="unit">€</span></div></div>
+    <div class="f"><label for="loss">Max Loss</label>
+      <div class="in"><input id="loss" inputmode="decimal" autocomplete="off" value="100"><span class="unit">€</span></div></div>
+    <div class="grid">
+      <div><label for="cur">Current Price</label>
+        <div class="in"><input id="cur" inputmode="decimal" autocomplete="off" placeholder="0"></div></div>
+      <div><label for="sup">Support Price</label>
+        <div class="in"><input id="sup" inputmode="decimal" autocomplete="off" placeholder="0"></div></div>
+    </div>
+    <div class="f">
+      <label for="sl"><span>Stop Loss</span><span><span class="tag" id="tag">from support</span> <button class="reset" id="reset" hidden>Reset</button></span></label>
+      <div class="in"><input id="sl" inputmode="decimal" autocomplete="off" placeholder="0"><span class="unit">%</span></div>
+      <div class="hint" id="hint"></div>
     </div>
   </div>
 
-  <!-- SL -->
-  <div class="card">
-    <div class="row">
-      <span class="lbl">SL · stop loss</span>
-      <div class="seg" id="segS">
-        <button data-m="pct" class="on">%</button>
-        <button data-m="px">Precios</button>
-      </div>
-    </div>
-    <div class="fields one" id="sPct">
-      <div><label for="sl">Distancia al stop</label>
-        <div class="in"><input id="sl" inputmode="decimal" autocomplete="off" value="8"><span class="unit">%</span></div></div>
-    </div>
-    <div class="fields" id="sPx" hidden>
-      <div><label for="e">Precio de entrada</label>
-        <div class="in"><input id="e" inputmode="decimal" autocomplete="off" placeholder="0"></div></div>
-      <div><label for="s">Precio del stop</label>
-        <div class="in"><input id="s" inputmode="decimal" autocomplete="off" placeholder="0"></div></div>
-    </div>
-    <div class="calc" id="sCalc" hidden></div>
-  </div>
-
-  <!-- Resultados -->
   <div class="card">
     <div class="res">
-      <div class="r" id="r1"><span class="k"><b>x1</b>Ix1</span><span class="v" id="v1">—</span></div>
-      <div class="r" id="r2"><span class="k"><b>x2</b>Ix2 · margen</span><span class="v" id="v2">—</span></div>
-      <div class="r" id="r4"><span class="k"><b>x4</b>Ix4 · margen</span><span class="v" id="v4">—</span></div>
+      <div class="r" id="r1"><span class="k">Investment x1</span><span class="v" id="v1">—</span></div>
+      <div class="r" id="r2"><span class="k">Investment x2</span><span class="v" id="v2">—</span></div>
+      <div class="r" id="r4"><span class="k">Investment x4</span><span class="v" id="v4">—</span></div>
+      <div class="r small"><span class="k">Shares</span><span class="v" id="vs">—</span></div>
+      <div class="r small"><span class="k">Loss if stopped</span><span class="v" id="vl">—</span></div>
     </div>
-    <div class="calc" id="extra"></div>
-    <div class="alert" id="al"></div>
+    <div class="alert" id="al" hidden></div>
   </div>
 
-  <p class="foot">La exposición real es siempre Ix1: si salta el stop se pierde P con x1, x2 o x4. El apalancamiento solo reduce el margen inmovilizado. Con x2 el margen se agota con una caída del 50 % y con x4 del 25 %; el bróker cierra antes. No incluye comisiones, spread ni deslizamiento.</p>
+  <p class="foot">Real exposure is always Investment x1: if the stop is hit you lose the Max Loss with x1, x2 or x4. Leverage only reduces the margin you put up. With x2 the margin is wiped out by a 50% move and with x4 by a 25% move; the broker closes earlier. Fees, spread and slippage not included.</p>
 </div>
 
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
   var eur = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
-  var pctf = new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
-  var numf = new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
-  var KEY = 'calc-posicion-v2';
-  var state = {sm:'pct'};
-  var ids = ['p','sl','e','s'];
+  var n2 = new Intl.NumberFormat('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2});
+  var n4 = new Intl.NumberFormat('es-ES',{maximumFractionDigits:4});
+  var KEY = 'stock-calc-v1';
+  var manual = false;
 
   function num(v){
-    v = String(v||'').trim().replace(/\s/g,'').replace(/€|%/g,'');
+    v = String(v||'').trim().replace(/\s/g,'').replace(/€|%|\$/g,'');
     if(!v) return NaN;
     if(v.indexOf(',')>=0){ v = v.replace(/\./g,'').replace(',','.'); }
     return parseFloat(v);
   }
   function load(){
     try{
-      var d = JSON.parse(localStorage.getItem(KEY)||'null');
-      if(!d) return;
-      ids.forEach(function(k){ if(d[k]!=null) $(k).value = d[k]; });
-      if(d.sm) state.sm = d.sm;
+      var d = JSON.parse(localStorage.getItem(KEY)||'null'); if(!d) return;
+      ['loss','cur','sup','sl'].forEach(function(k){ if(d[k]!=null) $(k).value = d[k]; });
+      manual = !!d.manual;
     }catch(e){}
   }
   function save(){
     try{
-      var d = {sm:state.sm};
-      ids.forEach(function(k){ d[k] = $(k).value; });
-      localStorage.setItem(KEY, JSON.stringify(d));
+      localStorage.setItem(KEY, JSON.stringify({loss:$('loss').value,cur:$('cur').value,sup:$('sup').value,sl:$('sl').value,manual:manual}));
     }catch(e){}
   }
-  function setSeg(seg, m){
-    [].forEach.call($(seg).querySelectorAll('button'), function(b){ b.classList.toggle('on', b.dataset.m===m); });
+  function supportSL(){
+    var c = num($('cur').value), s = num($('sup').value);
+    if(c>0 && s>0 && s!==c) return Math.abs(c-s)/c*100;
+    return NaN;
   }
-  function modes(){
-    setSeg('segS', state.sm);
-    $('sPct').hidden = state.sm!=='pct'; $('sPx').hidden = state.sm!=='px'; $('sCalc').hidden = state.sm!=='px';
+  function syncSL(){
+    if(manual) return;
+    var v = supportSL();
+    $('sl').value = isNaN(v) ? '' : n2.format(v);
   }
-  function setRow(id, vid, val, lev, liq){
+  function setRow(id, vid, val, warn, bad){
     var r = $(id); r.classList.remove('warn','bad');
     if(isNaN(val)){ $(vid).textContent='—'; return; }
-    if(liq){ r.classList.add('bad'); $(vid).textContent='Inviable'; return; }
+    if(bad){ r.classList.add('bad'); $(vid).textContent='Not viable'; return; }
     $(vid).textContent = eur.format(val);
-    if(lev) r.classList.add('warn');
+    if(warn) r.classList.add('warn');
   }
   function calc(){
-    var P, SL, entry = NaN, side = '';
-    P = num($('p').value);
-    if(state.sm==='pct'){ SL = num($('sl').value)/100; }
-    else{
-      entry = num($('e').value); var st = num($('s').value);
-      if(entry>0 && st>0 && st!==entry){
-        SL = Math.abs(entry-st)/entry; side = st<entry ? 'largo (compra)' : 'corto (venta)';
-        $('sCalc').innerHTML = 'SL = <b>'+pctf.format(SL*100)+' %</b> · '+side;
-      } else { SL = NaN; $('sCalc').innerHTML = (entry||st) ? '<span class="err">Entrada y stop deben ser distintos y mayores que 0</span>' : ''; }
+    var P = num($('loss').value), c = num($('cur').value), s = num($('sup').value);
+    var slp = num($('sl').value), SL = slp/100;
+
+    $('sl').classList.toggle('manual', manual);
+    $('tag').textContent = manual ? 'edited' : 'from support';
+    $('tag').className = 'tag' + (manual ? ' manual' : '');
+    $('reset').hidden = !manual;
+
+    // hint: side and stop price
+    var hint = '';
+    var short = (c>0 && s>0 && s>c);
+    if(c>0 && s>0 && s===c) hint = '<span class="err">Current Price and Support Price must differ</span>';
+    else if(c>0 && SL>0){
+      var stopPx = short ? c*(1+SL) : c*(1-SL);
+      hint = (short ? 'Short' : 'Long') + ' · Stop price: <b>' + n4.format(stopPx) + '</b>';
     }
+    $('hint').innerHTML = hint;
+
     var ok = P>0 && SL>0 && isFinite(P) && isFinite(SL);
     var I = ok ? P/SL : NaN;
-    var slp = SL*100;
     setRow('r1','v1', I, false, false);
-    setRow('r2','v2', ok? I/2 : NaN, ok && slp>=40, ok && slp>=50);
-    setRow('r4','v4', ok? I/4 : NaN, ok && slp>=20, ok && slp>=25);
+    setRow('r2','v2', ok ? I/2 : NaN, ok && slp>=40, ok && slp>=50);
+    setRow('r4','v4', ok ? I/4 : NaN, ok && slp>=20, ok && slp>=25);
+    $('vs').textContent = (ok && c>0) ? n2.format(I/c) : '—';
+    $('vl').textContent = ok ? eur.format(P) : '—';
 
-    var ex = '';
-    if(ok){
-      ex = 'Pérdida si salta el SL: <b>'+eur.format(P)+'</b>';
-      if(state.sm==='px' && entry>0) ex += ' · Unidades: <b>'+numf.format(I/entry)+'</b>';
-    }
-    $('extra').innerHTML = ex;
-
-    var al = $('al'); al.className = 'alert'; al.textContent='';
+    var al = $('al'); al.hidden = true; al.className = 'alert';
     if(ok && slp>=25){
-      al.className = 'alert show bad';
+      al.hidden = false; al.className = 'alert bad';
       al.textContent = slp>=50
-        ? 'Con un SL del '+pctf.format(slp)+' % ni x2 ni x4 son viables: el margen se agota antes de llegar al stop.'
-        : 'Con un SL del '+pctf.format(slp)+' % el x4 es inviable: con x4 el margen se agota con una caída del 25 % y el bróker cerraría antes del stop.';
+        ? 'Stop Loss of '+n2.format(slp)+'%: neither x2 nor x4 is viable. The margin is wiped out before the stop is reached.'
+        : 'Stop Loss of '+n2.format(slp)+'%: x4 is not viable. With x4 the margin is wiped out by a 25% move, so the broker would close before the stop.';
     } else if(ok && slp>=20){
-      al.className = 'alert show warn';
-      al.textContent = 'SL del '+pctf.format(slp)+' %: con x4 el stop está muy cerca del 25 % en el que se agota el margen. El bróker podría cerrar la posición antes.';
+      al.hidden = false; al.className = 'alert warn';
+      al.textContent = 'Stop Loss of '+n2.format(slp)+'%: with x4 the stop is close to the 25% move that wipes out the margin. The broker could close the position earlier.';
     }
     save();
   }
-  function bindSeg(seg, key){
-    $(seg).addEventListener('click', function(e){
-      var b = e.target.closest('button'); if(!b) return;
-      state[key] = b.dataset.m; modes(); calc();
-    });
-  }
-  load(); modes();
-  ids.forEach(function(k){ $(k).addEventListener('input', calc); $(k).addEventListener('focus', function(){ this.select(); }); });
-  bindSeg('segS','sm');
-  calc();
+
+  load(); syncSL(); calc();
+  ['loss','cur','sup','sl'].forEach(function(k){ $(k).addEventListener('focus', function(){ this.select(); }); });
+  $('loss').addEventListener('input', calc);
+  $('cur').addEventListener('input', function(){ syncSL(); calc(); });
+  $('sup').addEventListener('input', function(){ syncSL(); calc(); });
+  $('sl').addEventListener('input', function(){ manual = true; calc(); });
+  $('reset').addEventListener('click', function(){ manual = false; syncSL(); calc(); });
 
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });

@@ -1,8 +1,8 @@
 {
-  "name": "Calculadora bolsa",
-  "short_name": "Calc. bolsa",
-  "description": "Inversión x1, x2 y x4 a partir de la pérdida máxima (P) y el stop loss (SL).",
-  "lang": "es",
+  "name": "Stock Calculator",
+  "short_name": "Stock Calc",
+  "description": "Investment x1, x2 and x4 from Max Loss, Current Price and Support Price.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

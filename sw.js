@@ -1,5 +1,5 @@
-// Cambia la versión cada vez que subas cambios, para que los móviles se actualicen.
-const CACHE = 'calculadora-bolsa-v1';
+// Change the version on every update so phones refresh.
+const CACHE = 'calculadora-bolsa-v2';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -14,7 +14,7 @@ self.addEventListener('activate', e => {
   );
 });
 
-// Red primero (para recibir cambios); si no hay conexión, la copia guardada.
+// Network first; cached copy when offline.
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
