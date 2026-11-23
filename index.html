@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Calculadora bolsa</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0f172a; --card:#1e293b; --line:#334155; --txt:#f1f5f9; --mut:#94a3b8;
+    --acc:#38bdf8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:16px 14px calc(24px + env(safe-area-inset-bottom));}
+  .wrap{max-width:480px;margin:0 auto}
+  h1{font-size:20px;margin:4px 0 14px;font-weight:650}
+  h1 small{display:block;color:var(--mut);font-size:13px;font-weight:400;margin-top:2px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .lbl{font-size:15px;font-weight:600}
+  .seg{display:flex;background:var(--bg);border-radius:9px;padding:3px}
+  .seg button{border:0;background:transparent;color:var(--mut);font-size:13px;padding:6px 10px;border-radius:7px}
+  .seg button.on{background:var(--acc);color:#0f172a;font-weight:650}
+  .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fields.one{grid-template-columns:1fr}
+  label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+  .in{position:relative}
+  input{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--txt);
+    font-size:20px;padding:11px 34px 11px 12px;border-radius:10px;outline:none}
+  input:focus{border-color:var(--acc)}
+  .unit{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--mut);font-size:15px;pointer-events:none}
+  .calc{margin-top:8px;font-size:13px;color:var(--mut)}
+  .calc b{color:var(--txt)}
+  .res{display:grid;gap:8px}
+  .r{display:flex;justify-content:space-between;align-items:baseline;background:var(--bg);border-radius:10px;padding:12px 14px;border-left:4px solid var(--acc)}
+  .r .k{font-size:15px;color:var(--mut)}
+  .r .k b{color:var(--txt);font-size:18px;margin-right:6px}
+  .r .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+  .r .sub{display:block;text-align:right;font-size:12px;color:var(--mut);font-weight:400}
+  .r.warn{border-left-color:var(--warn)} .r.bad{border-left-color:var(--bad);opacity:.85}
+  .r.bad .v{color:var(--bad);font-size:18px}
+  .alert{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.4;display:none}
+  .alert.show{display:block}
+  .alert.warn{background:#f59e0b22;border:1px solid var(--warn);color:#fcd34d}
+  .alert.bad{background:#ef444422;border:1px solid var(--bad);color:#fca5a5}
+  .foot{font-size:12px;color:var(--mut);line-height:1.5}
+  .err{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Calculadora bolsa<small>I = P ÷ SL · inversión con x1, x2 y x4</small></h1>
+
+  <!-- P -->
+  <div class="card">
+    <div class="row"><span class="lbl">P · pérdida máxima</span></div>
+    <div class="fields one">
+      <div><label for="p">Pérdida aceptada en la operación</label>
+        <div class="in"><input id="p" inputmode="decimal" autocomplete="off" value="100"><span class="unit">€</span></div></div>
+    </div>
+  </div>
+
+  <!-- SL -->
+  <div class="card">
+    <div class="row">
+      <span class="lbl">SL · stop loss</span>
+      <div class="seg" id="segS">
+        <button data-m="pct" class="on">%</button>
+        <button data-m="px">Precios</button>
+      </div>
+    </div>
+    <div class="fields one" id="sPct">
+      <div><label for="sl">Distancia al stop</label>
+        <div class="in"><input id="sl" inputmode="decimal" autocomplete="off" value="8"><span class="unit">%</span></div></div>
+    </div>
+    <div class="fields" id="sPx" hidden>
+      <div><label for="e">Precio de entrada</label>
+        <div class="in"><input id="e" inputmode="decimal" autocomplete="off" placeholder="0"></div></div>
+      <div><label for="s">Precio del stop</label>
+        <div class="in"><input id="s" inputmode="decimal" autocomplete="off" placeholder="0"></div></div>
+    </div>
+    <div class="calc" id="sCalc" hidden></div>
+  </div>
+
+  <!-- Resultados -->
+  <div class="card">
+    <div class="res">
+      <div class="r" id="r1"><span class="k"><b>x1</b>Ix1</span><span class="v" id="v1">—</span></div>
+      <div class="r" id="r2"><span class="k"><b>x2</b>Ix2 · margen</span><span class="v" id="v2">—</span></div>
+      <div class="r" id="r4"><span class="k"><b>x4</b>Ix4 · margen</span><span class="v" id="v4">—</span></div>
+    </div>
+    <div class="calc" id="extra"></div>
+    <div class="alert" id="al"></div>
+  </div>
+
+  <p class="foot">La exposición real es siempre Ix1: si salta el stop se pierde P con x1, x2 o x4. El apalancamiento solo reduce el margen inmovilizado. Con x2 el margen se agota con una caída del 50 % y con x4 del 25 %; el bróker cierra antes. No incluye comisiones, spread ni deslizamiento.</p>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var eur = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR',minimumFractionDigits:2,maximumFractionDigits:2});
+  var pctf = new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
+  var numf = new Intl.NumberFormat('es-ES',{maximumFractionDigits:2});
+  var KEY = 'calc-posicion-v2';
+  var state = {sm:'pct'};
+  var ids = ['p','sl','e','s'];
+
+  function num(v){
+    v = String(v||'').trim().replace(/\s/g,'').replace(/€|%/g,'');
+    if(!v) return NaN;
+    if(v.indexOf(',')>=0){ v = v.replace(/\./g,'').replace(',','.'); }
+    return parseFloat(v);
+  }
+  function load(){
+    try{
+      var d = JSON.parse(localStorage.getItem(KEY)||'null');
+      if(!d) return;
+      ids.forEach(function(k){ if(d[k]!=null) $(k).value = d[k]; });
+      if(d.sm) state.sm = d.sm;
+    }catch(e){}
+  }
+  function save(){
+    try{
+      var d = {sm:state.sm};
+      ids.forEach(function(k){ d[k] = $(k).value; });
+      localStorage.setItem(KEY, JSON.stringify(d));
+    }catch(e){}
+  }
+  function setSeg(seg, m){
+    [].forEach.call($(seg).querySelectorAll('button'), function(b){ b.classList.toggle('on', b.dataset.m===m); });
+  }
+  function modes(){
+    setSeg('segS', state.sm);
+    $('sPct').hidden = state.sm!=='pct'; $('sPx').hidden = state.sm!=='px'; $('sCalc').hidden = state.sm!=='px';
+  }
+  function setRow(id, vid, val, lev, liq){
+    var r = $(id); r.classList.remove('warn','bad');
+    if(isNaN(val)){ $(vid).textContent='—'; return; }
+    if(liq){ r.classList.add('bad'); $(vid).textContent='Inviable'; return; }
+    $(vid).textContent = eur.format(val);
+    if(lev) r.classList.add('warn');
+  }
+  function calc(){
+    var P, SL, entry = NaN, side = '';
+    P = num($('p').value);
+    if(state.sm==='pct'){ SL = num($('sl').value)/100; }
+    else{
+      entry = num($('e').value); var st = num($('s').value);
+      if(entry>0 && st>0 && st!==entry){
+        SL = Math.abs(entry-st)/entry; side = st<entry ? 'largo (compra)' : 'corto (venta)';
+        $('sCalc').innerHTML = 'SL = <b>'+pctf.format(SL*100)+' %</b> · '+side;
+      } else { SL = NaN; $('sCalc').innerHTML = (entry||st) ? '<span class="err">Entrada y stop deben ser distintos y mayores que 0</span>' : ''; }
+    }
+    var ok = P>0 && SL>0 && isFinite(P) && isFinite(SL);
+    var I = ok ? P/SL : NaN;
+    var slp = SL*100;
+    setRow('r1','v1', I, false, false);
+    setRow('r2','v2', ok? I/2 : NaN, ok && slp>=40, ok && slp>=50);
+    setRow('r4','v4', ok? I/4 : NaN, ok && slp>=20, ok && slp>=25);
+
+    var ex = '';
+    if(ok){
+      ex = 'Pérdida si salta el SL: <b>'+eur.format(P)+'</b>';
+      if(state.sm==='px' && entry>0) ex += ' · Unidades: <b>'+numf.format(I/entry)+'</b>';
+    }
+    $('extra').innerHTML = ex;
+
+    var al = $('al'); al.className = 'alert'; al.textContent='';
+    if(ok && slp>=25){
+      al.className = 'alert show bad';
+      al.textContent = slp>=50
+        ? 'Con un SL del '+pctf.format(slp)+' % ni x2 ni x4 son viables: el margen se agota antes de llegar al stop.'
+        : 'Con un SL del '+pctf.format(slp)+' % el x4 es inviable: con x4 el margen se agota con una caída del 25 % y el bróker cerraría antes del stop.';
+    } else if(ok && slp>=20){
+      al.className = 'alert show warn';
+      al.textContent = 'SL del '+pctf.format(slp)+' %: con x4 el stop está muy cerca del 25 % en el que se agota el margen. El bróker podría cerrar la posición antes.';
+    }
+    save();
+  }
+  function bindSeg(seg, key){
+    $(seg).addEventListener('click', function(e){
+      var b = e.target.closest('button'); if(!b) return;
+      state[key] = b.dataset.m; modes(); calc();
+    });
+  }
+  load(); modes();
+  ids.forEach(function(k){ $(k).addEventListener('input', calc); $(k).addEventListener('focus', function(){ this.select(); }); });
+  bindSeg('segS','sm');
+  calc();
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
+})();
+</script>
+</body>
+</html>
